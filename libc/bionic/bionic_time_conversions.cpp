@@ -33,10 +33,11 @@ bool timespec_from_timeval(timespec& ts, const timeval& tv) {
   ts.tv_sec = tv.tv_sec;
 
   // But we might overflow when converting microseconds to nanoseconds.
-  if (tv.tv_usec >= 1000000 || tv.tv_usec < 0) {
+  if (tv.tv_usec < 0) {
     return false;
   }
-  ts.tv_nsec = tv.tv_usec * 1000;
+  ts.tv_sec += tv.tv_usec / 1000000;
+  ts.tv_nsec = (tv.tv_usec % 1000000) * 1000;
   return true;
 }
 
