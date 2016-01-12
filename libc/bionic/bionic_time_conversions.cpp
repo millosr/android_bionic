@@ -35,10 +35,18 @@ bool timespec_from_timeval(timespec& ts, const timeval& tv) {
   ts.tv_sec = tv.tv_sec;
 
   // But we might overflow when converting microseconds to nanoseconds.
+#ifdef LEGACY_BLOB_COMPATIBLE
+  if (tv.tv_usec < 0) {
+    return false;
+  }
+  ts.tv_sec += tv.tv_usec / 1000000;
+  ts.tv_nsec = (tv.tv_usec % 1000000) * 1000;
+#else
   if (tv.tv_usec >= 1000000 || tv.tv_usec < 0) {
     return false;
   }
   ts.tv_nsec = tv.tv_usec * 1000;
+#endif
   return true;
 }
 
