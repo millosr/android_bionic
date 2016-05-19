@@ -184,7 +184,6 @@ libc_bionic_src_files := \
     bionic/sched_getcpu.cpp \
     bionic/send.cpp \
     bionic/setegid.cpp \
-    bionic/__set_errno.cpp \
     bionic/seteuid.cpp \
     bionic/setpgrp.cpp \
     bionic/sigaction.cpp \
@@ -230,6 +229,10 @@ libc_bionic_src_files := \
     bionic/wait.cpp \
     bionic/wchar.cpp \
     bionic/wctype.cpp \
+
+ifneq ($(GNULINUX_SUPPORT),true)
+libc_bionic_src_files += bionic/__set_errno.cpp
+endif
 
 libc_cxa_src_files := \
     bionic/__cxa_guard.cpp \
@@ -950,6 +953,10 @@ LOCAL_SRC_FILES := \
     $(libc_static_common_src_files) \
     bionic/libc_init_static.cpp
 
+ifeq ($(GNULINUX_SUPPORT),true)
+LOCAL_SRC_FILES += bionic/__set_errno.cpp
+endif
+
 LOCAL_C_INCLUDES := $(libc_common_c_includes)
 LOCAL_CFLAGS := $(libc_common_cflags) \
     -DLIBC_STATIC \
@@ -996,6 +1003,10 @@ LOCAL_SRC_FILES := \
     $(libc_static_common_src_files) \
     bionic/malloc_debug_common.cpp \
     bionic/libc_init_static.cpp \
+
+ifeq ($(GNULINUX_SUPPORT),true)
+LOCAL_SRC_FILES += bionic/__set_errno.cpp
+endif
 
 LOCAL_CFLAGS := $(libc_common_cflags) \
     -DLIBC_STATIC \
@@ -1047,7 +1058,11 @@ LOCAL_STRIP_MODULE := keep_symbols
 # create a "cloaked" dependency on libgcc.a in libc though the libraries, which is not what
 # you wanted!
 
+ifeq ($(GNULINUX_SUPPORT),true)
+LOCAL_SHARED_LIBRARIES := libdl libdsyscalls
+else
 LOCAL_SHARED_LIBRARIES := libdl
+endif
 LOCAL_WHOLE_STATIC_LIBRARIES := libc_common
 LOCAL_SYSTEM_SHARED_LIBRARIES :=
 
@@ -1071,6 +1086,43 @@ LOCAL_SRC_FILES_arm += \
 
 include $(BUILD_SHARED_LIBRARY)
 
+ifeq ($(GNULINUX_SUPPORT),true)
+# ========================================================
+# libdsyscalls.so
+# ========================================================
+include $(CLEAR_VARS)
+
+# NOTE: --exclude-libs=libgcc.a makes sure that any symbols libdl.so pulls from
+# libgcc.a are made static to libdyscalls.so.  This in turn ensures that libraries that
+# a) pull symbols from libgcc.a and b) depend on libdl.so will not rely on libdl.so
+# to provide those symbols, but will instead pull them from libgcc.a.  Specifically,
+# we use this property to make sure libc.so has its own copy of the code from
+# libgcc.a it uses.
+#
+# DO NOT REMOVE --exclude-libs!
+
+LOCAL_LDFLAGS := -Wl,--exclude-libs=libgcc.a
+
+# for x86, exclude libgcc_eh.a for the same reasons as above
+LOCAL_LDFLAGS_x86 := -Wl,--exclude-libs=libgcc_eh.a
+LOCAL_LDFLAGS_x86_64 := $(LOCAL_LDFLAGS_x86)
+
+LOCAL_SRC_FILES:= hybris/libdsyscalls.c
+LOCAL_CFLAGS := -Wall -Wextra -Wunused -Werror
+
+LOCAL_MODULE := libdsyscalls
+LOCAL_ADDITIONAL_DEPENDENCIES := 
+
+# NOTE: libdl needs __aeabi_unwind_cpp_pr0 from libgcc.a but libgcc.a needs a
+# few symbols from libc. Using --no-undefined here results in having to link
+# against libc creating a circular dependency which is removed and we end up
+# with missing symbols. Since this library is just a bunch of stubs, we set
+# LOCAL_ALLOW_UNDEFINED_SYMBOLS to remove --no-undefined from the linker flags.
+LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
+LOCAL_SYSTEM_SHARED_LIBRARIES :=
+
+include $(BUILD_SHARED_LIBRARY)
+endif #GNULINUX_SUPPORT
 
 # For all builds, except for the -user build we will enable memory
 # allocation checking (including memory leaks, buffer overwrites, etc.)

@@ -517,7 +517,11 @@ static int __libc_write_log(int priority, const char* tag, const char* msg) {
   vec[5].iov_base = const_cast<char*>(msg);
   vec[5].iov_len = strlen(msg) + 1;
 #else
+#ifdef GNULINUX_SUPPORT
+  int main_log_fd = TEMP_FAILURE_RETRY(open("/dev/alog/main", O_CLOEXEC | O_WRONLY));
+#else
   int main_log_fd = TEMP_FAILURE_RETRY(open("/dev/log/main", O_CLOEXEC | O_WRONLY));
+#endif
   if (main_log_fd == -1) {
     if (errno == ENOTDIR) {
       // /dev/log isn't a directory? Maybe we're running on the host? Try stderr instead.
@@ -589,7 +593,11 @@ static int __libc_android_log_event(int32_t tag, char type, const void* payload,
   vec[2].iov_base = const_cast<void*>(payload);
   vec[2].iov_len = len;
 
+#ifdef GNULINUX_SUPPORT
+  int event_log_fd = TEMP_FAILURE_RETRY(open("/dev/alog/events", O_CLOEXEC | O_WRONLY));
+#else
   int event_log_fd = TEMP_FAILURE_RETRY(open("/dev/log/events", O_CLOEXEC | O_WRONLY));
+#endif
 #endif
 
   if (event_log_fd == -1) {
