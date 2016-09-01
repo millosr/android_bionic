@@ -630,6 +630,9 @@ LIBC {
     mbsrtowcs;
     mbstowcs;
     mbtowc; # introduced=21
+    MD5_Init;
+    MD5_Update;
+    MD5_Final;
     memalign;
     memccpy;
     memchr;
