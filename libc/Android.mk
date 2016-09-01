@@ -45,6 +45,7 @@ libc_common_src_files := \
     bionic/getpriority.c \
     bionic/initgroups.c \
     bionic/isatty.c \
+    bionic/md5.c \
     bionic/memmem.c \
     bionic/pututline.c \
     bionic/sched_cpualloc.c \
