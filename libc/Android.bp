@@ -1422,6 +1422,12 @@ cc_library_static {
         },
     },
 
+    product_variables: {
+        legacy_blob_compatible: {
+            cppflags: ["-DLEGACY_BLOB_COMPATIBLE"],
+        },
+    },
+
     cppflags: ["-Wold-style-cast"],
     local_include_dirs: ["stdio"],
     include_dirs: ["bionic/libstdc++/include"],
