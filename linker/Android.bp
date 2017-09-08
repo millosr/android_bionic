@@ -111,6 +111,9 @@ cc_binary {
         target_shim_libs: {
             cppflags: ["-DLD_SHIM_LIBS=\"%s\""],
         },
+        legacy_blob_compatible: {
+            cppflags: ["-DLEGACY_BLOB_COMPATIBLE"],
+        },
     },
 
     cppflags: ["-Wold-style-cast"],
